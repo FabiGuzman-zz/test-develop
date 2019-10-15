@@ -1,4 +1,4 @@
-service: bb-related-person
+service: test-develop
 
 provider:
   name: aws
