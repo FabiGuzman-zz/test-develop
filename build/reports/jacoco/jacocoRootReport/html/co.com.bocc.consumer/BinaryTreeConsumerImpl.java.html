@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>BinaryTreeConsumerImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">test-develop</a> &gt; <a href="index.source.html" class="el_package">co.com.bocc.consumer</a> &gt; <span class="el_source">BinaryTreeConsumerImpl.java</span></div><h1>BinaryTreeConsumerImpl.java</h1><pre class="source lang-java linenums">package co.com.bocc.consumer;
+
+import co.com.adl.commons.errors.dto.MessageCode;
+import co.com.bocc.model.BinaryTreeModel;
+import co.com.bocc.model.BinaryTreeNode;
+import co.com.bocc.model.BinaryTreeResponse;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+<span class="nc" id="L13">public class BinaryTreeConsumerImpl implements BinaryTreeConsumer {</span>
+
+<span class="nc" id="L15">  private static final Logger LOGGER = LogManager.getLogger(BinaryTreeConsumerImpl.class);</span>
+
+  @Override
+  public BinaryTreeResponse binaryTree(
+      final BinaryTreeModel request,
+      final Map&lt;String, Object&gt; headers) {
+
+<span class="nc" id="L22">    LOGGER.info(&quot;Initing process consumer service of binary tree&quot;);</span>
+
+<span class="nc" id="L24">    final BinaryTreeResponse binaryTreeResponse = new BinaryTreeResponse();</span>
+<span class="nc" id="L25">    binaryTreeResponse.setTreeData(request.getTreeData());</span>
+<span class="nc" id="L26">    binaryTreeResponse.setCode(MessageCode.SUCCESSFUL.getCode());</span>
+<span class="nc" id="L27">    binaryTreeResponse.setMessage(&quot;Binary tree was saved successfully&quot;);</span>
+<span class="nc" id="L28">    return binaryTreeResponse;</span>
+
+  }
+
+  @Override
+  public BinaryTreeResponse lowestCommonAncestor(
+      final BinaryTreeNode binaryTree, final BinaryTreeNode nodeOne, final BinaryTreeNode nodeTwo) {
+
+<span class="nc" id="L36">    LOGGER.info(&quot;Initing process of getting lowest common ancestor&quot;);</span>
+
+<span class="nc" id="L38">    final BinaryTreeNode&lt;Integer&gt; commonAncestor = binaryTree</span>
+<span class="nc" id="L39">        .lowestCommonAncestor(binaryTree, nodeOne, nodeTwo);</span>
+<span class="nc" id="L40">    final List&lt;String&gt; ancestor = new ArrayList&lt;String&gt;();</span>
+<span class="nc" id="L41">    ancestor.add(commonAncestor.data.toString());</span>
+<span class="nc" id="L42">    final BinaryTreeModel binaryTreeModel = new BinaryTreeModel();</span>
+<span class="nc" id="L43">    binaryTreeModel.setTreeData(ancestor);</span>
+
+<span class="nc" id="L45">    final BinaryTreeResponse binaryTreeResponse = new BinaryTreeResponse();</span>
+<span class="nc" id="L46">    binaryTreeResponse.setTreeData(binaryTreeModel.getTreeData());</span>
+<span class="nc" id="L47">    binaryTreeResponse.setCode(MessageCode.SUCCESSFUL.getCode());</span>
+<span class="nc" id="L48">    binaryTreeResponse.setMessage(&quot;The lowest ancestor of the nodes was found successfully&quot;);</span>
+<span class="nc" id="L49">    return binaryTreeResponse;</span>
+
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span></div></body></html>

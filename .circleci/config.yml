@@ -1,0 +1,226 @@
+branch_filters_dev: &branch_filters_dev
+  filters:
+    branches:
+      only: develop
+
+branch_filters_stg: &branch_filters_stg
+  filters:
+    branches:
+      only: master
+
+branch_filters_prod: &branch_filters_prod
+  filters:
+    tags:
+      only: /^release-.*/
+    branches:
+      ignore: /.*/
+
+###
+
+save_build_number: &save_build_number
+  name: Save buildnum to workspace
+  command: |
+    mkdir -p /tmp/workspace
+    echo ${CIRCLE_BUILD_NUM} > /tmp/workspace/buildnum
+
+save_build_number_prod: &save_build_number_prod
+  name: Save buildnum to workspace
+  command: |
+    mkdir -p /tmp/workspace
+    echo ${CIRCLE_TAG} > /tmp/workspace/buildnum
+
+persist_to_workspace: &persist_to_workspace
+  root: /tmp/workspace
+  paths:
+    - buildnum
+setting_aws_access: &setting_aws_access
+  name: Setting aws credentials
+  command: |
+    export var_prefix=${ENVIRONMENT}
+    #
+    varname_AWS_ACCESS_KEY_ID=$(echo "${var_prefix}_AWS_ACCESS_KEY_ID" | sed 's/-/_/g')
+    varname_AWS_SECRET_ACCESS_KEY=$(echo "${var_prefix}_AWS_SECRET_ACCESS_KEY" | sed 's/-/_/g')
+    varname_AWS_DEFAULT_REGION=$(echo "${var_prefix}_AWS_DEFAULT_REGION" | sed 's/-/_/g')
+    varname_AWS_ACCOUNT_ID=$(echo "${var_prefix}_AWS_ACCOUNT_ID" | sed 's/-/_/g')
+    #
+    echo "export AWS_ACCESS_KEY_ID=${!varname_AWS_ACCESS_KEY_ID}" >> $BASH_ENV
+    echo "export AWS_SECRET_ACCESS_KEY=${!varname_AWS_SECRET_ACCESS_KEY}">> $BASH_ENV
+    echo "export AWS_DEFAULT_REGION=${!varname_AWS_DEFAULT_REGION}">> $BASH_ENV
+    echo "export AWS_ACCOUNT_ID=${!varname_AWS_ACCOUNT_ID}">> $BASH_ENV
+    #
+    echo "export AWS_REGION=${AWS_DEFAULT_REGION}" >> $BASH_ENV
+    echo 'export PATH=~/.local/bin:$PATH' >> $BASH_ENV
+    #
+    varname_API_ID=$(echo "${var_prefix}_API_ID" | sed 's/-/_/g')
+    varname_API_ROOT_ID=$(echo "${var_prefix}_API_ROOT_ID" | sed 's/-/_/g')
+    #
+    echo "export API_ID=${!varname_API_ID}" >> $BASH_ENV
+    echo "export API_ROOT_ID=${!varname_API_ROOT_ID}" >> $BASH_ENV
+
+
+install_dependencies: &install_dependencies
+  name: Install node and serverless framework
+  command: |
+    set +e
+    curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.33.11/install.sh | bash
+    export NVM_DIR="/opt/circleci/.nvm"
+    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+    nvm install v11.2.0
+    nvm alias default v11.2.0
+
+    # Each step uses the same `$BASH_ENV`, so need to modify it
+    echo 'export NVM_DIR="/opt/circleci/.nvm"' >> $BASH_ENV
+    echo "[ -s \"$NVM_DIR/nvm.sh\" ] && . \"$NVM_DIR/nvm.sh\"" >> $BASH_ENV
+    echo 'export PATH=$PATH:/opt/circleci/.nvm/versions/node/v11.2.0/bin/node' >> $BASH_ENV
+    echo 'export PATH=$PATH:/opt/circleci/.nvm/versions/node/v11.2.0/bin/npm' >> $BASH_ENV
+    echo $PATH
+    #
+    node -v
+    npm -v
+    npm install -g serverless@1.35.1
+    npm install serverless-ssm-seed
+    npm install serverless-plugin-tracing
+    npm install serverless-deployment-bucket
+    npm install serverless-prune-plugin
+
+build_java_app: &build_java_app
+  name: Build java application
+  command: |
+    echo ${AWS_ACCESS_KEY_ID}
+    sh gradlew clean build install --refresh-dependencies --stacktrace
+    sh gradlew sonarqube
+
+deploy: &deploy
+  name: Deploy serverles
+  no_output_timeout: 5m
+  command: |
+    echo ${ENVIRONMENT}
+    serverless config credentials --provider aws --key ${AWS_ACCESS_KEY_ID} --secret ${AWS_SECRET_ACCESS_KEY}
+    sls deploy -v --force --stage ${ENVIRONMENT}
+
+
+
+release_dev: &release_dev
+  name: Release and publish on jfrog
+  command: |
+    chmod +x gradleSnapshot.sh
+    ./gradleSnapshot.sh
+
+release_stg: &release_stg
+  name: Release and publish on jfrog
+  command: |
+    export var_prefix=${ENVIRONMENT}
+    chmod +x gradleRelease.sh
+    ./gradleRelease.sh
+
+  ###
+
+version: 2
+jobs:
+  dev_build:
+    environment:
+      ENVIRONMENT: "dev"
+    machine:
+      docker_layer_caching: true
+    steps:
+      - checkout
+      - run:
+          <<: *save_build_number
+      - persist_to_workspace:
+          <<: *persist_to_workspace
+      - run:
+          <<: *setting_aws_access
+      - run:
+          <<: *install_dependencies
+      - run:
+          <<: *build_java_app
+      - run:
+          <<: *deploy
+
+
+  stg_build:
+    environment:
+      ENVIRONMENT: "stg"
+    machine:
+      docker_layer_caching: true
+    steps:
+      - checkout
+      - run:
+          <<: *save_build_number
+      - persist_to_workspace:
+          <<: *persist_to_workspace
+      - run:
+          <<: *setting_aws_access
+      - run:
+          <<: *install_dependencies
+      - run:
+          <<: *build_java_app
+      - run:
+          <<: *deploy
+
+  prod_build:
+    environment:
+      ENVIRONMENT: "prod"
+    machine:
+      docker_layer_caching: true
+    steps:
+      - checkout
+      - run:
+          <<: *save_build_number_prod
+      - persist_to_workspace:
+          <<: *persist_to_workspace
+      - run:
+          <<: *setting_aws_access
+      - run:
+          <<: *install_dependencies
+      - run:
+          <<: *build_java_app
+      - run:
+          <<: *deploy
+
+  dev_release:
+    machine:
+      docker_layer_caching: true
+    steps:
+      - checkout
+      - attach_workspace:
+          at: /tmp/workspace
+      - run:
+          <<: *release_dev
+
+  stg_release:
+    machine:
+      docker_layer_caching: true
+    steps:
+      - checkout
+      - attach_workspace:
+          at: /tmp/workspace
+      - run:
+          <<: *release_stg
+
+
+
+###
+
+workflows:
+  version: 2
+  build-and-update-image:
+    jobs:
+      - dev_build:
+          <<: *branch_filters_dev
+      - dev_release:
+          <<: *branch_filters_dev
+          requires:
+            - dev_build
+      #
+      - stg_build:
+          <<: *branch_filters_stg
+      - stg_release:
+          <<: *branch_filters_stg
+          requires:
+            - stg_build
+      #
+      - prod_build:
+          <<: *branch_filters_prod
+
+

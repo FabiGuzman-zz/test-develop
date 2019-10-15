@@ -1,0 +1,13 @@
+dependencies {
+    compile group: 'com.google.code.gson', name: 'gson', version: '2.8.5'
+    compile group: 'org.json', name: 'json', version: '20180813'
+    compile group: 'org.apache.cxf', name: 'cxf-spring-boot-starter-jaxws', version: '3.2.1'
+    compile group: 'org.apache.cxf', name: 'cxf-rt-ws-security', version: '3.2.1'
+    compile group: 'org.apache.cxf', name: 'cxf-rt-features-logging', version: '3.2.1'
+    compile group: 'org.apache.logging.log4j', name: 'log4j-core', version: '2.8.2'
+    compile group: 'com.amazonaws', name: 'aws-lambda-java-log4j2', version: '1.0.0'
+    compile group: 'co.adl.commons', name: 'commons-documents', version: "$adlCommons"
+    compile group: 'org.apache.logging.log4j', name: 'log4j-api', version: '2.8.2'
+    compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.25'
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+}

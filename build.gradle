@@ -1,0 +1,265 @@
+buildscript {
+    ext {
+        awsLambdaCore = '1.1.0'
+        awsLambdaLog = '1.0.0'
+        jacocoVersion = '0.8.1'
+        adlCommons = '0.0.238'
+        guiceVersion = '4.2.2'
+        commonsServerlessLambda = '0.0.23'
+        jackson = '2.8.5'
+        retrofitVersion = '2.3.0'
+        mockitoVersion = '2.19.0'
+        jfrogUser = System.getenv('JFROG_USER')
+        jfrogPassword = System.getenv('JFROG_PASSWORD')
+        jfrogContextUrl = System.getenv('JFROG_CONTEXT_URL')
+        sonarToken = System.getenv('SONAR_TOKEN')
+    }
+
+    repositories {
+        mavenLocal()
+        maven {
+            url "https://plugins.gradle.org/m2/"
+        }
+        maven {
+            url "https://avaldigitallabs.jfrog.io/avaldigitallabs/libs-release"
+            credentials {
+                username = "$jfrogUser"
+                password = "$jfrogPassword"
+            }
+        }
+        maven {
+            url "https://avaldigitallabs.jfrog.io/avaldigitallabs/libs-snapshot"
+            credentials {
+                username = "$jfrogUser"
+                password = "$jfrogPassword"
+            }
+        }
+    }
+    dependencies {
+        classpath 'net.researchgate:gradle-release:2.6.0'
+        classpath("gradle.plugin.argelbargel.gradle.plugins:sonarqube-multiproject-plugin:1.3")
+        classpath "org.jfrog.buildinfo:build-info-extractor-gradle:latest.release"
+
+    }
+
+}
+
+apply from: "$rootDir/gradle/all.gradle"
+apply from: "$rootDir/gradle/release.gradle"
+
+release {
+    tagTemplate = '$name-$version'
+    failOnCommitNeeded = false
+    failOnPublishNeeded = true
+    failOnSnapshotDependencies = false
+    failOnUnversionedFiles = true
+    failOnUpdateNeeded = true
+    revertOnFail = true
+    preCommitText = '[ci skip] [CircleCI] '
+    preTagCommitMessage = 'release '
+    tagCommitMessage = 'release '
+    newVersionCommitMessage = 'release '
+    buildTasks = ['build', 'releaseBuild', 'publishCurrent']
+
+}
+
+task releaseBuild {
+    dependsOn(
+            'tree-binary:build'
+    )
+}
+
+task publishCurrent {
+    dependsOn('artifactoryPublish')
+}
+
+subprojects {
+    apply plugin: 'java'
+    apply from: "$rootDir/gradle/code-quality/jacoco.gradle"
+
+    sourceCompatibility = 1.8
+    targetCompatibility = 1.8
+
+
+    repositories {
+        mavenLocal()
+
+        maven {
+            url "https://avaldigitallabs.jfrog.io/avaldigitallabs/libs-release"
+            credentials {
+                username = "$jfrogUser"
+                password = "$jfrogPassword"
+            }
+        }
+        maven {
+            url "https://avaldigitallabs.jfrog.io/avaldigitallabs/libs-snapshot"
+            credentials {
+                username = "$jfrogUser"
+                password = "$jfrogPassword"
+            }
+        }
+    }
+
+    configurations {
+        all*.exclude group: 'org.springframework.cloud'
+        all*.exclude group: 'org.springframework.security'
+        all*.exclude group: 'org.springframework.security.oauth.boot'
+        all*.exclude group: 'org.springframework.boot'
+        all*.exclude group: 'org.springframework.data'
+        all*.exclude group: 'io.zipkin.java'
+        all*.exclude group: 'io.springfox'
+        all*.exclude group: 'io.swagger'
+        all*.exclude group: 'io.zipkin.zipkin2'
+        all*.exclude group: 'io.zipkin.aws'
+        all*.exclude group: 'io.zipkin'
+        all*.exclude group: 'io.zipkin.reporter2'
+        all*.exclude group: 'com.fasterxml.uuid'
+        all*.exclude group: 'com.samskivert'
+        all*.exclude group: 'net.sf.ehcache'
+        all*.exclude group: 'org.bouncycastle'
+        all*.exclude group: 'org.apache.tomcat'
+        all*.exclude group: 'org.apache.lucene'
+        all*.exclude group: 'org.apache.ant'
+        all*.exclude group: 'org.opensaml'
+        all*.exclude group: 'com.deliveredtechnologies'
+        all*.exclude group: 'log4j'
+    }
+
+    dependencies {
+        compile "com.amazonaws:aws-lambda-java-core:$awsLambdaCore"
+        compile "com.amazonaws:aws-lambda-java-log4j:$awsLambdaLog"
+        compile(group: 'co.adl.commons', name: 'commons-errors', version: "$adlCommons") {
+            exclude(module: 'commons-testing')
+            exclude(module: 'brave-instrumentation-okhttp3')
+            exclude(module: 'brave')
+            exclude(module: 'brave-context-slf4j')
+            exclude(module: 'spring-cloud-starter-sleuth')
+            exclude(module: 'spring-security-oauth2-autoconfigure')
+            exclude(module: 'spring-data-redis')
+            exclude(module: 'retrofit')
+            exclude(module: 'converter-jackson')
+            exclude(module: 'adapter-java8')
+            exclude(module: 'converter-gson')
+            exclude(module: 'okhttp')
+            exclude(module: 'jedis')
+            exclude(module: 'modelmapper')
+            exclude(module: 'rulebook-core')
+            exclude(module: 'jmustache')
+            exclude(module: 'guava')
+            exclude(module: 'jasypt')
+            exclude(module: 'jjwt')
+            exclude(module: 'jackson-core')
+            exclude(module: 'jackson-annotations')
+            exclude(module: 'jackson-databind')
+            exclude(module: 'jackson-module-mrbean')
+            exclude(module: 'spring-boot-starter-test')
+            exclude(module: 'spring-boot-starter-security')
+            exclude(module: 'commons-codec')
+        }
+        compile "com.google.inject:guice:$guiceVersion"
+        compile "co.adl.commons:adl-digital-commons-serverless-lambda:$commonsServerlessLambda"
+        compile(group: 'co.adl.commons', name: 'commons-events', version: "$adlCommons")
+        compile(group: 'co.adl.commons', name: 'commons-client', version: "$adlCommons")
+        compile(group: 'co.adl.commons', name: 'commons-errors', version: "$adlCommons")
+        compile "com.fasterxml.jackson.core:jackson-core:$jackson"
+        compile "com.fasterxml.jackson.core:jackson-databind:$jackson"
+        compile "com.fasterxml.jackson.core:jackson-annotations:$jackson"
+        compile group: 'ma.glasnost.orika', name: 'orika-core', version: '1.4.6'
+        testCompile group: 'org.mockito', name: 'mockito-core', version: "$mockitoVersion"
+    }
+
+// Task for building the zip file for upload
+    task buildZip(type: Zip) {
+        // Using the Zip API from gradle to build a zip file of all the dependencies
+        //
+        // The path to this zip file can be set in the serverless.yml file for the
+        // package/artifact setting for deployment to the S3 bucket
+        //
+        // Link: https://docs.gradle.org/current/dsl/org.gradle.api.tasks.bundling.Zip.html
+
+        // set the base name of the zip file
+
+        from compileJava
+        from processResources
+        into('lib') {
+            from configurations.runtime
+        }
+    }
+
+    build.dependsOn buildZip
+
+
+    clean.doLast {
+
+        println("${project(":${it.project.getName()}").projectDir}/.serverless")
+        file("${project(":${it.project.getName()}").projectDir}/.serverless").deleteDir()
+    }
+
+}
+
+task serverlesProperties() {
+
+    doLast {
+
+        def file = new File("${project.buildDir}/serverlessVersion.yml")
+
+        file.withWriter('UTF-8') {
+            subprojects.each {
+
+                s -> it.writeLine(s.getName() + ': ' + s.getName() + '/' + s.getBuildDir().getName() + '/distributions/' + s.getName() + '-' + s.getVersion() + '.zip')
+            }
+        }
+    }
+}
+
+build.dependsOn serverlesProperties
+
+task jacocoRootReport(type: org.gradle.testing.jacoco.tasks.JacocoReport) {
+    dependsOn = subprojects.test
+    additionalSourceDirs = files(subprojects.sourceSets.main.allSource.srcDirs)
+    sourceDirectories = files(subprojects.sourceSets.main.allSource.srcDirs)
+    classDirectories = files(subprojects.sourceSets.main.output)
+    executionData = files(subprojects.jacocoTestReport.executionData)
+    reports {
+        html.enabled = true
+        xml.enabled = true
+        csv.enabled = false
+    }
+    afterEvaluate {
+        classDirectories = files(classDirectories.files.collect {
+            fileTree(dir: it, exclude: [
+                    '**/starter/**',
+                    '**/config/**'
+            ])
+        })
+    }
+    onlyIf = {
+        true
+    }
+    doFirst {
+        executionData = files(executionData.findAll {
+            it.exists()
+        })
+    }
+
+}
+
+sonarqube {
+    properties {
+        property "sonar.java.coveragePlugin", "jacoco"
+        property "sonar.jacoco.reportPaths", "$buildDir/reports/jacoco/"
+        property "sonar.exclusions", "**/*Config.java,**/Application.java"
+        property "sonar.host.url", "https://sonarcloud.io"
+        property "sonar.organization", "avaldigitallabsorganization"
+        property "sonar.login", "$sonarToken"
+    }
+}
+
+test.finalizedBy jacocoRootReport
+
+task deploy(type: Exec) {
+    doFirst {
+        commandLine 'serverless', 'deploy', '-v'
+    }
+
+}

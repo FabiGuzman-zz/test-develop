@@ -1,0 +1,20 @@
+repositories {
+    mavenLocal()
+    maven {
+        url "https://avaldigitallabs.jfrog.io/avaldigitallabs/libs-release"
+        credentials {
+            username = "$jfrogUser"
+            password = "$jfrogPassword"
+        }
+    }
+    maven {
+        url "https://avaldigitallabs.jfrog.io/avaldigitallabs/libs-snapshot"
+        credentials {
+            username = "$jfrogUser"
+            password = "$jfrogPassword"
+        }
+    }
+}
+apply plugin: "argelbargel.gradle.plugins.sonarqube-multiproject-plugin"
+apply plugin: 'net.researchgate.release'
+

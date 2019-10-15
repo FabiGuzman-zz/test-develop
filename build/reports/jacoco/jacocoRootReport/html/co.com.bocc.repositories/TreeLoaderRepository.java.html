@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>TreeLoaderRepository.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">test-develop</a> &gt; <a href="index.source.html" class="el_package">co.com.bocc.repositories</a> &gt; <span class="el_source">TreeLoaderRepository.java</span></div><h1>TreeLoaderRepository.java</h1><pre class="source lang-java linenums">package co.com.bocc.repositories;
+
+import com.amazonaws.services.dynamodbv2.document.BatchWriteItemOutcome;
+import com.amazonaws.services.dynamodbv2.document.DynamoDB;
+import com.amazonaws.services.dynamodbv2.document.Item;
+import com.amazonaws.services.dynamodbv2.document.PrimaryKey;
+import com.amazonaws.services.dynamodbv2.document.TableWriteItems;
+import com.google.inject.Inject;
+import io.vavr.control.Try;
+import java.util.Optional;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+public class TreeLoaderRepository {
+
+<span class="nc" id="L16">  private static final Logger LOGGER = LogManager.getLogger(TreeLoaderRepository.class);</span>
+
+  private DynamoDB dynamoDB;
+  private String tableName;
+
+  @Inject
+  public TreeLoaderRepository(
+<span class="nc" id="L23">      final DynamoDB dynamoDB, final String tableName) {</span>
+<span class="nc" id="L24">    this.dynamoDB = dynamoDB;</span>
+<span class="nc" id="L25">    this.tableName = tableName;</span>
+<span class="nc" id="L26">  }</span>
+
+  public void saveItems(final Item items) {
+
+<span class="nc" id="L30">    LOGGER.info(&quot;Writing item tree: {}&quot;, items.asMap().toString());</span>
+    BatchWriteItemOutcome outcome;
+<span class="nc" id="L32">    final TableWriteItems tableWriteItems =</span>
+<span class="nc" id="L33">        new TableWriteItems(tableName).withItemsToPut(items);</span>
+<span class="nc" id="L34">    outcome = dynamoDB.batchWriteItem(tableWriteItems);</span>
+<span class="nc bnc" id="L35" title="All 2 branches missed.">    while (outcome.getUnprocessedItems().size() &gt; 0) {</span>
+<span class="nc" id="L36">      LOGGER</span>
+<span class="nc" id="L37">          .info(&quot;Processing &quot; + outcome.getUnprocessedItems().size() + &quot; unprocessed items&quot;);</span>
+<span class="nc" id="L38">      outcome = dynamoDB.batchWriteItemUnprocessed(outcome.getUnprocessedItems());</span>
+    }
+<span class="nc" id="L40">  }</span>
+
+  public Item getItem(final String idTree) {
+<span class="nc" id="L43">    LOGGER.debug(&quot;********** findTreeById started **********&quot;);</span>
+<span class="nc" id="L44">    return Try.of(() -&gt; dynamoDB.getTable(tableName))</span>
+<span class="nc" id="L45">        .map(table -&gt; Optional</span>
+<span class="nc" id="L46">            .ofNullable(table.getItem(getPrimaryKey(idTree))))</span>
+<span class="nc" id="L47">        .peek(item -&gt; LOGGER.debug(&quot;is the key present in teh database? {},&quot;, item.isPresent()))</span>
+<span class="nc" id="L48">        .get().get();</span>
+  }
+
+  private PrimaryKey getPrimaryKey(final String idTree) {
+
+<span class="nc" id="L53">    final PrimaryKey primaryKey = new PrimaryKey();</span>
+<span class="nc" id="L54">    primaryKey.addComponent(&quot;idNumber&quot;, idTree);</span>
+<span class="nc" id="L55">    primaryKey.addComponent(&quot;idType&quot;, &quot;tree&quot;);</span>
+<span class="nc" id="L56">    return primaryKey;</span>
+  }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span></div></body></html>

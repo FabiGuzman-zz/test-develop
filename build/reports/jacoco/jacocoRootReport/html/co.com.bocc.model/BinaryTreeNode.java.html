@@ -1,0 +1,282 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>BinaryTreeNode.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">test-develop</a> &gt; <a href="index.source.html" class="el_package">co.com.bocc.model</a> &gt; <span class="el_source">BinaryTreeNode.java</span></div><h1>BinaryTreeNode.java</h1><pre class="source lang-java linenums">package co.com.bocc.model;
+
+import java.util.AbstractSequentialList;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.ConcurrentModificationException;
+import java.util.LinkedList;
+import java.util.ListIterator;
+import java.util.NoSuchElementException;
+import java.util.Objects;
+import java.util.Queue;
+
+public class BinaryTreeNode&lt;E&gt; extends AbstractSequentialList&lt;E&gt;
+    implements Cloneable, java.io.Serializable {
+
+  public E data;
+  public BinaryTreeNode&lt;E&gt; left;
+  public BinaryTreeNode&lt;E&gt; right;
+
+  private transient boolean leftIsNull;
+  private transient boolean rightIsNull;
+
+<span class="nc" id="L23">  public BinaryTreeNode() {</span>
+<span class="nc" id="L24">    data = null;</span>
+<span class="nc" id="L25">    left = null;</span>
+<span class="nc" id="L26">    right = null;</span>
+<span class="nc" id="L27">  }</span>
+
+<span class="nc" id="L29">  public BinaryTreeNode(final E value) {</span>
+<span class="nc bnc" id="L30" title="All 2 branches missed.">    if (value == null) {</span>
+<span class="nc" id="L31">      throw new IllegalArgumentException(&quot;null value&quot;);</span>
+    }
+<span class="nc" id="L33">    this.data = value;</span>
+<span class="nc" id="L34">    left = null;</span>
+<span class="nc" id="L35">    right = null;</span>
+<span class="nc" id="L36">  }</span>
+
+  public BinaryTreeNode(final Collection&lt;? extends E&gt; c) {
+<span class="nc" id="L39">    this();</span>
+<span class="nc" id="L40">    addAll(c);</span>
+<span class="nc" id="L41">  }</span>
+
+  private static &lt;E&gt; void preOrder(final BinaryTreeNode&lt;E&gt; root, final ArrayList&lt;E&gt; result) {
+<span class="nc bnc" id="L44" title="All 2 branches missed.">    if (root == null) {</span>
+<span class="nc" id="L45">      return;</span>
+    }
+
+<span class="nc" id="L48">    result.add(root.data);</span>
+<span class="nc bnc" id="L49" title="All 2 branches missed.">    if (Objects.nonNull(root.left)) {</span>
+<span class="nc" id="L50">      preOrder(root.left, result);</span>
+    }
+<span class="nc bnc" id="L52" title="All 2 branches missed.">    if (Objects.nonNull(root.right)) {</span>
+<span class="nc" id="L53">      preOrder(root.right, result);</span>
+    }
+<span class="nc" id="L55">  }</span>
+
+  public int size() {
+<span class="nc bnc" id="L58" title="All 2 branches missed.">    if (Objects.isNull(data)) {</span>
+<span class="nc" id="L59">      return 0;</span>
+    }
+
+<span class="nc" id="L62">    final Queue&lt;BinaryTreeNode&lt;E&gt;&gt; queue = new LinkedList&lt;&gt;();</span>
+<span class="nc" id="L63">    queue.add(this);</span>
+
+<span class="nc" id="L65">    int count = 0;</span>
+<span class="nc bnc" id="L66" title="All 2 branches missed.">    while (!queue.isEmpty()) {</span>
+<span class="nc" id="L67">      final BinaryTreeNode&lt;E&gt; node = queue.remove();</span>
+<span class="nc" id="L68">      ++count;</span>
+<span class="nc bnc" id="L69" title="All 2 branches missed.">      if (Objects.nonNull(node.left)) {</span>
+<span class="nc" id="L70">        queue.add(node.left);</span>
+      } else {
+<span class="nc bnc" id="L72" title="All 2 branches missed.">        if (node.leftIsNull) {</span>
+<span class="nc" id="L73">          ++count;</span>
+        }
+      }
+<span class="nc bnc" id="L76" title="All 2 branches missed.">      if (Objects.nonNull(node.right)) {</span>
+<span class="nc" id="L77">        queue.add(node.right);</span>
+      } else {
+<span class="nc bnc" id="L79" title="All 2 branches missed.">        if (node.rightIsNull) {</span>
+<span class="nc" id="L80">          ++count;</span>
+        }
+      }
+<span class="nc" id="L83">    }</span>
+<span class="nc" id="L84">    return count;</span>
+  }
+
+  private boolean isPositionIndex(final int index) {
+<span class="nc bnc" id="L88" title="All 4 branches missed.">    return index &gt;= 0 &amp;&amp; index &lt;= size();</span>
+  }
+
+  private String outOfBoundsMsg(final int index) {
+<span class="nc" id="L92">    return &quot;Index: &quot; + index + &quot;, Size: &quot; + size();</span>
+  }
+
+  private void checkPositionIndex(final int index) {
+<span class="nc bnc" id="L96" title="All 2 branches missed.">    if (!isPositionIndex(index)) {</span>
+<span class="nc" id="L97">      throw new IndexOutOfBoundsException(outOfBoundsMsg(index));</span>
+    }
+<span class="nc" id="L99">  }</span>
+
+  NodeAndFather node(final int index) {
+<span class="nc" id="L102">    checkPositionIndex(index);</span>
+<span class="nc bnc" id="L103" title="All 2 branches missed.">    if (Objects.isNull(data)) {</span>
+<span class="nc" id="L104">      return null;</span>
+    }
+
+<span class="nc" id="L107">    final Queue&lt;NodeAndFather&gt; queue = new LinkedList&lt;&gt;();</span>
+<span class="nc" id="L108">    queue.add(new NodeAndFather(this, null, false));</span>
+
+<span class="nc bnc" id="L110" title="All 2 branches missed.">    for (int i = 0; !queue.isEmpty(); ++i) {</span>
+<span class="nc" id="L111">      final NodeAndFather nodeAndFather = queue.remove();</span>
+<span class="nc bnc" id="L112" title="All 2 branches missed.">      if (i == index) {</span>
+<span class="nc" id="L113">        return nodeAndFather;</span>
+      }
+
+<span class="nc bnc" id="L116" title="All 2 branches missed.">      if (Objects.nonNull(nodeAndFather.node)) {</span>
+<span class="nc" id="L117">        queue.add(generateNodeAndFather(nodeAndFather.node.left, nodeAndFather.node, false));</span>
+<span class="nc" id="L118">        queue.add(generateNodeAndFather(nodeAndFather.node.right, nodeAndFather.node, true));</span>
+      }
+    }
+<span class="nc" id="L121">    throw new IllegalArgumentException(&quot;Illegal index: &quot; + index);</span>
+  }
+
+  public ListIterator&lt;E&gt; listIterator(final int index) {
+<span class="nc" id="L125">    checkPositionIndex(index);</span>
+<span class="nc" id="L126">    return new ListItr(index);</span>
+  }
+
+  ArrayList&lt;E&gt; preOrder() {
+<span class="nc" id="L130">    final ArrayList&lt;E&gt; result = new ArrayList&lt;&gt;();</span>
+<span class="nc bnc" id="L131" title="All 2 branches missed.">    if (Objects.isNull(this.data)) {</span>
+<span class="nc" id="L132">      return result;</span>
+    }
+<span class="nc" id="L134">    preOrder(this, result);</span>
+<span class="nc" id="L135">    return result;</span>
+  }
+
+  public BinaryTreeNode lowestCommonAncestor(final BinaryTreeNode root, final BinaryTreeNode a,
+      final BinaryTreeNode b) {
+<span class="nc bnc" id="L140" title="All 2 branches missed.">    if (root == null) {</span>
+<span class="nc" id="L141">      return null;</span>
+    }
+<span class="nc bnc" id="L143" title="All 4 branches missed.">    if (root.data == a.data || root.data == b.data) {</span>
+<span class="nc" id="L144">      return root;</span>
+    }
+
+<span class="nc" id="L147">    final BinaryTreeNode left = lowestCommonAncestor(root.left, a, b);</span>
+<span class="nc" id="L148">    final BinaryTreeNode right = lowestCommonAncestor(root.right, a, b);</span>
+
+    // If we get left and right not null , it is lca for a and b
+<span class="nc bnc" id="L151" title="All 4 branches missed.">    if (Objects.nonNull(left) &amp;&amp; Objects.nonNull(right)) {</span>
+<span class="nc" id="L152">      return root;</span>
+    }
+<span class="nc bnc" id="L154" title="All 2 branches missed.">    if (Objects.isNull(left)) {</span>
+<span class="nc" id="L155">      return right;</span>
+    } else {
+<span class="nc" id="L157">      return left;</span>
+    }
+
+  }
+
+  private NodeAndFather generateNodeAndFather(final BinaryTreeNode&lt;E&gt; node,
+      final BinaryTreeNode&lt;E&gt; father,
+      final boolean isRight) {
+
+<span class="nc" id="L166">    return new NodeAndFather(node, father, isRight);</span>
+  }
+
+  private class NodeAndFather {
+
+    private BinaryTreeNode&lt;E&gt; node;
+    private BinaryTreeNode&lt;E&gt; father;
+    private boolean isRight;  // the father is the right child of the father
+
+    private NodeAndFather(final BinaryTreeNode&lt;E&gt; node, final BinaryTreeNode&lt;E&gt; father,
+<span class="nc" id="L176">        final boolean isRight) {</span>
+<span class="nc" id="L177">      this.node = node;</span>
+<span class="nc" id="L178">      this.father = father;</span>
+<span class="nc" id="L179">      this.isRight = isRight;</span>
+<span class="nc" id="L180">    }</span>
+  }
+
+<span class="nc bnc" id="L183" title="All 2 branches missed.">  private class ListItr implements ListIterator&lt;E&gt; {</span>
+
+    private NodeAndFather next;
+    private int nextIndex;
+<span class="nc" id="L187">    private int expectedModCount = modCount;</span>
+
+<span class="nc" id="L189">    ListItr(final int index) {</span>
+<span class="nc bnc" id="L190" title="All 4 branches missed.">      assert isPositionIndex(index);</span>
+<span class="nc" id="L191">      next = node(index);</span>
+<span class="nc" id="L192">      nextIndex = index;</span>
+<span class="nc" id="L193">    }</span>
+
+    public boolean hasNext() {
+<span class="nc" id="L196">      final BinaryTreeNode&lt;E&gt; cur = next.node;</span>
+<span class="nc bnc" id="L197" title="All 6 branches missed.">      return cur != null || (next.father.leftIsNull || next.father.rightIsNull);</span>
+    }
+
+    public E next() {
+<span class="nc" id="L201">      checkForComodification();</span>
+<span class="nc bnc" id="L202" title="All 2 branches missed.">      if (!hasNext()) {</span>
+<span class="nc" id="L203">        throw new NoSuchElementException();</span>
+      }
+
+<span class="nc bnc" id="L206" title="All 2 branches missed.">      final E result = Objects.nonNull(next.node) ? next.node.data : null;</span>
+<span class="nc" id="L207">      next = node(nextIndex + 1);</span>
+<span class="nc" id="L208">      nextIndex++;</span>
+<span class="nc" id="L209">      return result;</span>
+    }
+
+    public boolean hasPrevious() {
+<span class="nc" id="L213">      throw new UnsupportedOperationException();</span>
+    }
+
+    public E previous() {
+<span class="nc" id="L217">      throw new UnsupportedOperationException();</span>
+    }
+
+    public int nextIndex() {
+<span class="nc" id="L221">      throw new UnsupportedOperationException();</span>
+    }
+
+    public int previousIndex() {
+<span class="nc" id="L225">      throw new UnsupportedOperationException();</span>
+    }
+
+    public void remove() {
+<span class="nc" id="L229">      throw new UnsupportedOperationException();</span>
+    }
+
+    public void set(final E e) {
+<span class="nc" id="L233">      throw new UnsupportedOperationException();</span>
+    }
+
+    public void add(final E e) {  // always append at the tail
+<span class="nc" id="L237">      checkForComodification();</span>
+
+<span class="nc bnc" id="L239" title="All 2 branches missed.">      if (next == null) { // empty list</span>
+<span class="nc" id="L240">        BinaryTreeNode.this.data = e;</span>
+<span class="nc" id="L241">        BinaryTreeNode.this.left = null;</span>
+<span class="nc" id="L242">        BinaryTreeNode.this.right = null;</span>
+      } else {
+<span class="nc bnc" id="L244" title="All 2 branches missed.">        final BinaryTreeNode&lt;E&gt; newNode = e != null ? new BinaryTreeNode&lt;&gt;(e) : null;</span>
+<span class="nc bnc" id="L245" title="All 2 branches missed.">        if (next.father == null) { // root</span>
+<span class="nc" id="L246">          final BinaryTreeNode&lt;E&gt; cur = next.node;</span>
+<span class="nc" id="L247">          cur.left = newNode;</span>
+<span class="nc bnc" id="L248" title="All 4 branches missed.">          assert cur.right == null;</span>
+<span class="nc" id="L249">          throw new UnsupportedOperationException();</span>
+        } else {
+<span class="nc bnc" id="L251" title="All 2 branches missed.">          if (next.isRight) {</span>
+<span class="nc bnc" id="L252" title="All 2 branches missed.">            if (Objects.nonNull(next.father.right)) {</span>
+<span class="nc" id="L253">              throw new IllegalStateException();</span>
+            }
+<span class="nc" id="L255">            next.father.right = newNode;</span>
+<span class="nc bnc" id="L256" title="All 2 branches missed.">            if (Objects.isNull(newNode)) {</span>
+<span class="nc" id="L257">              next.father.rightIsNull = true;</span>
+            }
+          } else {
+<span class="nc bnc" id="L260" title="All 2 branches missed.">            if (Objects.nonNull(next.father.left)) {</span>
+<span class="nc" id="L261">              throw new IllegalStateException();</span>
+            }
+<span class="nc" id="L263">            next.father.left = newNode;</span>
+<span class="nc bnc" id="L264" title="All 2 branches missed.">            if (Objects.isNull(newNode)) {</span>
+<span class="nc" id="L265">              next.father.leftIsNull = true;</span>
+            }
+
+          }
+        }
+      }
+<span class="nc" id="L271">      modCount++;</span>
+<span class="nc" id="L272">      expectedModCount++;</span>
+<span class="nc" id="L273">    }</span>
+
+    final void checkForComodification() {
+<span class="nc bnc" id="L276" title="All 2 branches missed.">      if (modCount != expectedModCount) {</span>
+<span class="nc" id="L277">        throw new ConcurrentModificationException();</span>
+      }
+<span class="nc" id="L279">    }</span>
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span></div></body></html>

@@ -1,0 +1,18 @@
+apply plugin: 'findbugs'
+
+findbugs {
+    toolVersion = '3.0.1'
+    effort = 'max'
+    reportLevel = 'low'
+    ignoreFailures = true
+    sourceSets = [sourceSets.main]
+    excludeFilter = rootProject.file("gradle/code-quality/config/findbugs/excludeFilter.xml")
+}
+
+tasks.withType(FindBugs) {
+    reports {
+        xml.enabled false
+        html.enabled true
+    }
+
+}

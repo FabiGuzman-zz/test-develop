@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>BinaryTreeController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">test-develop</a> &gt; <a href="index.source.html" class="el_package">co.com.bocc.controllers</a> &gt; <span class="el_source">BinaryTreeController.java</span></div><h1>BinaryTreeController.java</h1><pre class="source lang-java linenums">package co.com.bocc.controllers;
+
+import co.adl.commons.rest.JsonUtil.JsonUtilBuilder;
+import co.adl.commons.util.GenericBuilder;
+import co.com.adl.commons.errors.dto.ErrorLayer;
+import co.com.adl.commons.errors.dto.MessageCode;
+import co.com.adl.commons.errors.dto.Response;
+import co.com.adl.commons.errors.dto.Status;
+import co.com.bocc.config.BinaryTreeConfig;
+import co.com.bocc.model.BinaryTreeModel;
+import co.com.bocc.services.BinaryTreeService;
+import com.adl.bc.common.controller.lambda.ProxyRequest;
+import com.adl.bc.common.controller.lambda.ProxyResponse;
+import com.adl.bc.common.controller.lambda.ProxyResponseBuilder;
+import com.adl.bc.common.util.GuiceApplication.ApplicationBuilder;
+import com.adl.bc.common.util.ResponseWrapper;
+import com.amazonaws.services.lambda.runtime.Context;
+import com.amazonaws.services.lambda.runtime.RequestHandler;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.vavr.Tuple;
+import io.vavr.control.Try;
+import java.util.Arrays;
+import java.util.Objects;
+import org.apache.http.HttpStatus;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+<span class="nc" id="L28">public class BinaryTreeController implements RequestHandler&lt;ProxyRequest, ProxyResponse&gt; {</span>
+
+<span class="nc" id="L30">  private static final Logger LOGGER = LogManager.getLogger(BinaryTreeController.class);</span>
+<span class="nc" id="L31">  private final String keyIdTree = &quot;X-TreeId&quot;;</span>
+  private BinaryTreeService service;
+
+  @Override
+  public ProxyResponse handleRequest(final ProxyRequest proxyRequest, final Context context) {
+
+<span class="nc" id="L37">    final ObjectMapper objectMapper = new ObjectMapper();</span>
+
+<span class="nc" id="L39">    final Try&lt;BinaryTreeModel&gt; treeModel = Try</span>
+<span class="nc" id="L40">        .of(() -&gt; objectMapper.readValue(proxyRequest.getBodyString(), BinaryTreeModel.class));</span>
+
+<span class="nc" id="L42">    LOGGER</span>
+<span class="nc" id="L43">        .info(&quot;Init processing binary tree service. proxyRequest is : {} &quot;,</span>
+<span class="nc" id="L44">            proxyRequest.getBodyString());</span>
+
+<span class="nc" id="L46">    return treeModel.map(mapper -&gt; mapper)</span>
+<span class="nc" id="L47">        .peek(treeModelRequest -&gt; LOGGER.info(&quot;treeModel request :{}&quot;,</span>
+<span class="nc" id="L48">            JsonUtilBuilder.create(treeModelRequest).build()))</span>
+<span class="nc" id="L49">        .map(treeModelRequest -&gt; Tuple.of(treeModelRequest, proxyRequest.getHeaders()))</span>
+<span class="nc" id="L50">        .map(tuple -&gt; {</span>
+<span class="nc bnc" id="L51" title="All 2 branches missed.">          if (tuple._1.getTreeData().size() == 2) {</span>
+<span class="nc" id="L52">            return getService()</span>
+<span class="nc" id="L53">                .lowestCommonAncestor(tuple._1, String.valueOf(tuple._2.get(keyIdTree)));</span>
+          } else {
+<span class="nc" id="L55">            return getService().binaryTree(tuple._1, tuple._2);</span>
+          }
+        })
+<span class="nc" id="L58">        .map(response -&gt; {</span>
+
+<span class="nc" id="L60">          return ProxyResponseBuilder.create()</span>
+<span class="nc" id="L61">              .statusCode(</span>
+<span class="nc bnc" id="L62" title="All 2 branches missed.">                  response.getCode().compareTo(&quot;0&quot;) == 0 ? 200 : 500)</span>
+<span class="nc" id="L63">              .isBase64Encoded(false)</span>
+<span class="nc" id="L64">              .body(response)</span>
+<span class="nc" id="L65">              .build();</span>
+
+<span class="nc" id="L67">        }).getOrElseGet(error -&gt; ResponseWrapper.withStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR)</span>
+<span class="nc" id="L68">            .withResponse(GenericBuilder.of(() -&gt; new Response(MessageCode.UNEXPECTED))</span>
+<span class="nc" id="L69">                .with(Response::setDetails, Arrays.asList(GenericBuilder.of(Status::new)</span>
+<span class="nc" id="L70">                    .with(Status::setCode, MessageCode.UNEXPECTED.getCode())</span>
+<span class="nc" id="L71">                    .with(Status::setMessage, error.getMessage())</span>
+<span class="nc" id="L72">                    .with(Status::setErrorLayer, ErrorLayer.SERVER)</span>
+<span class="nc" id="L73">                    .build()</span>
+                ))
+<span class="nc" id="L75">                .build())</span>
+<span class="nc" id="L76">            .build());</span>
+  }
+
+
+  public BinaryTreeService getService() {
+<span class="nc bnc" id="L81" title="All 2 branches missed.">    return Objects.isNull(service) ? ApplicationBuilder.create(BinaryTreeService.class)</span>
+<span class="nc" id="L82">        .modules(new BinaryTreeConfig())</span>
+<span class="nc" id="L83">        .build()</span>
+<span class="nc" id="L84">        .getBean() : service;</span>
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span></div></body></html>
