@@ -26,7 +26,7 @@
 #                                    39       23
 #                                null  45  5     null
 
-# 6) Cuando se quiera calcular el ancesrro común más cercano de dos nodos, la lista debe contener los dos nodos y se debe pasar 
+# 6) Cuando se quiera calcular el ancestro común más cercano de dos nodos, la lista debe contener los dos nodos y se debe pasar 
 #    en el header X-TreeId, el id del arbol que previamente fue construido
 
 #    Ejemplo de request para calcular el ancestro: {
